@@ -5,9 +5,8 @@ extern crate alloc;
 use alloc::vec;
 use core::fmt::Write;
 
-const SCREEN_WIDTH: usize = 256;
-const SCREEN_HEIGHT: usize = 256;
-const SCREEN_DIMENSION: usize = SCREEN_WIDTH * SCREEN_HEIGHT;
+const SCREEN_WIDTH: usize = 75;
+const SCREEN_HEIGHT: usize = 75;
 
 const THETA_SPACING: f64 = 0.07;
 const PHI_SPACING: f64 = 0.02;
@@ -52,7 +51,7 @@ fn render_frame(a: f64, b: f64) -> uefi::Status {
             let phi_step = core::iter::successors(Some(0.0), |&phi| {
                 let end = 2.0 * core::f64::consts::PI;
                 if phi < end {
-                    Some(phi + THETA_SPACING)
+                    Some(phi + PHI_SPACING)
                 } else {
                     None
                 }
@@ -81,21 +80,21 @@ fn render_frame(a: f64, b: f64) -> uefi::Status {
                 if l > 0.0 {
                     if ooz > zbuffer[xp][yp] {
                         zbuffer[xp][yp] = ooz;
-                        let luminance_index = l * 8.0;
+                        let luminance_index = (l * 8.0) as usize;
 
-                        output[xp][yp] = b".,-~:;=!*#$@"[luminance_index as usize] as char;
+                        output[xp][yp] = b".,-~:;=!*#$@"[luminance_index] as char;
                     }
                 }
             }
         }
 
-        screen.set_cursor_position(0, 0);
+        let _ = screen.reset(false);
         for j in 0..SCREEN_HEIGHT {
             for i in 0..SCREEN_WIDTH {
-                screen.write_char(output[i][j]);
+                let _ = screen.write_char(output[i][j]);
             }
 
-            screen.write_char('\n');
+            let _ = screen.write_char('\n');
         }
 
         uefi::Status::NOT_READY
@@ -112,6 +111,8 @@ fn main() -> uefi::Status {
         if status == uefi::Status::SUCCESS {
             break;
         }
+
+        uefi::boot::stall(core::time::Duration::from_millis(1000 / 60));
     }
 
     status
