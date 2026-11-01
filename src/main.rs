@@ -95,7 +95,19 @@ fn render_frame(a: f64, b: f64) {
 fn main() -> uefi::Status {
     uefi::helpers::init().unwrap();
 
-    render_frame(1.0, 1.0);
+    loop {
+        if let Ok(Some(key)) = uefi::system::with_stdin(|screen| screen.read_key()) {
+            if key
+                == uefi::proto::console::text::Key::Special(
+                    uefi::proto::console::text::ScanCode::ESCAPE,
+                )
+            {
+                break;
+            }
+        }
+
+        render_frame(1.0, 1.0);
+    }
 
     uefi::Status::SUCCESS
 }
