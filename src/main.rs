@@ -5,8 +5,8 @@ extern crate alloc;
 use alloc::vec;
 use core::fmt::Write;
 
-const SCREEN_WIDTH: usize = 640;
-const SCREEN_HEIGHT: usize = 480;
+const SCREEN_WIDTH: usize = 256;
+const SCREEN_HEIGHT: usize = 256;
 const SCREEN_DIMENSION: usize = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 const THETA_SPACING: f64 = 0.07;
@@ -18,9 +18,6 @@ const K1: f64 = (SCREEN_WIDTH as f64) * K2 * 3.0 / (8.0 * (R1 + R2));
 
 fn render_frame(a: f64, b: f64) {
     uefi::system::with_stdout(|screen| {
-        screen.clear();
-        screen.set_cursor_position(0, 0);
-
         let cos_a = libm::cos(a);
         let cos_b = libm::cos(b);
         let sin_a = libm::sin(a);
@@ -77,19 +74,20 @@ fn render_frame(a: f64, b: f64) {
                         let luminance_index = l * 8.0;
 
                         output[xp as usize][yp as usize] =
-                            ".,-~:;=!*#$@".as_bytes()[luminance_index as usize] as char;
+                            b".,-~:;=!*#$@"[luminance_index as usize] as char;
                     }
                 }
             }
         }
 
+        screen.set_cursor_position(0, 0);
         for j in 0..SCREEN_HEIGHT {
             for i in 0..SCREEN_WIDTH {
                 screen.write_char(output[i][j]);
             }
-        }
 
-        screen.write_char('\n');
+            screen.write_char('\n');
+        }
     });
 }
 
