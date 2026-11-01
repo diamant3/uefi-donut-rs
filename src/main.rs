@@ -72,19 +72,18 @@ fn render_frame(a: f64, b: f64) -> uefi::Status {
                 let z = K2 + cos_a * circle_x * sin_phi + circle_y * sin_a;
                 let ooz = 1.0 / z;
 
-                let xp = SCREEN_WIDTH as f64 / 2.0 + K1 * ooz * x;
-                let yp = SCREEN_HEIGHT as f64 / 2.0 - K1 * ooz * y;
+                let xp = (SCREEN_WIDTH as f64 / 2.0 + K1 * ooz * x) as usize;
+                let yp = (SCREEN_HEIGHT as f64 / 2.0 - K1 * ooz * y) as usize;
 
                 let l =
                     cos_phi * cos_theta * sin_b - cos_a * cos_theta * sin_phi - sin_a * sin_theta
                         + cos_b * (cos_a * sin_theta - cos_theta * sin_a * sin_phi);
                 if l > 0.0 {
-                    if ooz > zbuffer[xp as usize][yp as usize] {
-                        zbuffer[xp as usize][yp as usize] = ooz;
+                    if ooz > zbuffer[xp][yp] {
+                        zbuffer[xp][yp] = ooz;
                         let luminance_index = l * 8.0;
 
-                        output[xp as usize][yp as usize] =
-                            b".,-~:;=!*#$@"[luminance_index as usize] as char;
+                        output[xp][yp] = b".,-~:;=!*#$@"[luminance_index as usize] as char;
                     }
                 }
             }
