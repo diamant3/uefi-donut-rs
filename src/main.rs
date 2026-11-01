@@ -16,8 +16,18 @@ const R2: f64 = 2.0;
 const K2: f64 = 5.0;
 const K1: f64 = (SCREEN_WIDTH as f64) * K2 * 3.0 / (8.0 * (R1 + R2));
 
-fn render_frame(a: f64, b: f64) {
+fn render_frame(a: f64, b: f64) -> uefi::Status {
     uefi::system::with_stdout(|screen| {
+        if let Ok(Some(key)) = uefi::system::with_stdin(|stdin| stdin.read_key()) {
+            if key
+                == uefi::proto::console::text::Key::Special(
+                    uefi::proto::console::text::ScanCode::ESCAPE,
+                )
+            {
+                return uefi::Status::SUCCESS;
+            }
+        }
+
         let cos_a = libm::cos(a);
         let cos_b = libm::cos(b);
         let sin_a = libm::sin(a);
@@ -88,26 +98,22 @@ fn render_frame(a: f64, b: f64) {
 
             screen.write_char('\n');
         }
-    });
+
+        uefi::Status::NOT_READY
+    })
 }
 
 #[uefi::entry]
 fn main() -> uefi::Status {
     uefi::helpers::init().unwrap();
 
+    let status = uefi::Status::NOT_READY;
     loop {
-        if let Ok(Some(key)) = uefi::system::with_stdin(|screen| screen.read_key()) {
-            if key
-                == uefi::proto::console::text::Key::Special(
-                    uefi::proto::console::text::ScanCode::ESCAPE,
-                )
-            {
-                break;
-            }
+        let status = render_frame(0.0, 0.0);
+        if status == uefi::Status::SUCCESS {
+            break;
         }
-
-        render_frame(1.0, 1.0);
     }
 
-    uefi::Status::SUCCESS
+    status
 }
