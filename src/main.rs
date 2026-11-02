@@ -15,6 +15,8 @@ const R2: f64 = 2.0;
 const K2: f64 = 5.0;
 const K1: f64 = (SCREEN_WIDTH as f64) * K2 * 3.0 / (8.0 * (R1 + R2));
 
+const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
+
 #[uefi::entry]
 fn main() -> uefi::Status {
     uefi::helpers::init().unwrap();
@@ -41,12 +43,8 @@ fn main() -> uefi::Status {
         let mut zbuffer = vec![vec![0.0; SCREEN_HEIGHT]; SCREEN_WIDTH];
 
         let theta_step = core::iter::successors(Some(0.0), |&theta| {
-            let end = 2.0 * core::f64::consts::PI;
-            if theta < end {
-                Some(theta + THETA_SPACING)
-            } else {
-                None
-            }
+            let next = theta + THETA_SPACING;
+            (next < LOOP_END).then_some(next)
         });
 
         for theta in theta_step {
@@ -54,12 +52,8 @@ fn main() -> uefi::Status {
             let sin_theta = libm::sin(theta);
 
             let phi_step = core::iter::successors(Some(0.0), |&phi| {
-                let end = 2.0 * core::f64::consts::PI;
-                if phi < end {
-                    Some(phi + PHI_SPACING)
-                } else {
-                    None
-                }
+                let next = phi + PHI_SPACING;
+                (next < LOOP_END).then_some(next)
             });
 
             for phi in phi_step {
