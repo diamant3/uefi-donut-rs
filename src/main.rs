@@ -94,7 +94,6 @@ fn main() -> uefi::Status {
 
         let _ = uefi::system::with_stdout(|screen| {
             screen.clear().unwrap();
-            screen.set_cursor_position(0, 0).unwrap();
             for j in 0..SCREEN_HEIGHT {
                 for i in 0..SCREEN_WIDTH {
                     screen.write_char(output[i][j]).unwrap();
@@ -106,6 +105,8 @@ fn main() -> uefi::Status {
 
         a += 0.04;
         b += 0.02;
+
+        uefi::boot::stall(core::time::Duration::from_millis(1000 / 60));
     }
 
     uefi::Status::SUCCESS
