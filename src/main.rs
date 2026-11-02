@@ -21,9 +21,16 @@ const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
 fn main() -> uefi::Status {
     uefi::helpers::init().unwrap();
 
-    let a = 0.0;
-    let b = 0.0;
+    let mut a = 0.0;
+    let mut b = 0.0;
+
+    let mut output = vec![vec![' '; SCREEN_HEIGHT]; SCREEN_WIDTH];
+    let mut zbuffer = vec![vec![0.0; SCREEN_HEIGHT]; SCREEN_WIDTH];
+
     loop {
+        output.iter_mut().for_each(|row| row.fill(' '));
+        zbuffer.iter_mut().for_each(|row| row.fill(0.0));
+
         if let Ok(Some(key)) = uefi::system::with_stdin(|stdin| stdin.read_key()) {
             if key
                 == uefi::proto::console::text::Key::Special(
@@ -38,9 +45,6 @@ fn main() -> uefi::Status {
         let cos_b = libm::cos(b);
         let sin_a = libm::sin(a);
         let sin_b = libm::sin(b);
-
-        let mut output = vec![vec![' '; SCREEN_HEIGHT]; SCREEN_WIDTH];
-        let mut zbuffer = vec![vec![0.0; SCREEN_HEIGHT]; SCREEN_WIDTH];
 
         let theta_step = core::iter::successors(Some(0.0), |&theta| {
             let next = theta + THETA_SPACING;
@@ -76,12 +80,13 @@ fn main() -> uefi::Status {
                 let l =
                     cos_phi * cos_theta * sin_b - cos_a * cos_theta * sin_phi - sin_a * sin_theta
                         + cos_b * (cos_a * sin_theta - cos_theta * sin_a * sin_phi);
-                if l > 0.0 {
+                if xp < SCREEN_WIDTH && yp < SCREEN_HEIGHT && l > 0.0 {
                     if ooz > zbuffer[xp][yp] {
                         zbuffer[xp][yp] = ooz;
-                        let luminance_index = (l * 8.0) as usize;
+                        let chars = b".,-~:;=!*#$@";
+                        let luminance_index = ((l * 8.0) as usize).min(chars.len() - 1);
 
-                        output[xp][yp] = b".,-~:;=!*#$@"[luminance_index] as char;
+                        output[xp][yp] = chars[luminance_index] as char;
                     }
                 }
             }
@@ -89,7 +94,6 @@ fn main() -> uefi::Status {
 
         let _ = uefi::system::with_stdout(|screen| {
             screen.clear().unwrap();
-            screen.enable_cursor(true).unwrap();
             screen.set_cursor_position(0, 0).unwrap();
             for j in 0..SCREEN_HEIGHT {
                 for i in 0..SCREEN_WIDTH {
@@ -99,6 +103,9 @@ fn main() -> uefi::Status {
                 screen.write_char('\n').unwrap();
             }
         });
+
+        a += 0.04;
+        b += 0.02;
     }
 
     uefi::Status::SUCCESS
