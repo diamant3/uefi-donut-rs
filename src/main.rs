@@ -15,15 +15,20 @@ const R2: f64 = 2.0;
 const K2: f64 = 5.0;
 const K1: f64 = (SCREEN_WIDTH as f64) * K2 * 3.0 / (8.0 * (R1 + R2));
 
-fn render_frame(a: f64, b: f64) -> uefi::Status {
-    uefi::system::with_stdout(|screen| {
+#[uefi::entry]
+fn main() -> uefi::Status {
+    uefi::helpers::init().unwrap();
+
+    let a = 0.0;
+    let b = 0.0;
+    loop {
         if let Ok(Some(key)) = uefi::system::with_stdin(|stdin| stdin.read_key()) {
             if key
                 == uefi::proto::console::text::Key::Special(
                     uefi::proto::console::text::ScanCode::ESCAPE,
                 )
             {
-                return uefi::Status::SUCCESS;
+                break;
             }
         }
 
@@ -88,32 +93,19 @@ fn render_frame(a: f64, b: f64) -> uefi::Status {
             }
         }
 
-        let _ = screen.reset(false);
-        for j in 0..SCREEN_HEIGHT {
-            for i in 0..SCREEN_WIDTH {
-                let _ = screen.write_char(output[i][j]);
+        let _ = uefi::system::with_stdout(|screen| {
+            screen.clear().unwrap();
+            screen.enable_cursor(true).unwrap();
+            screen.set_cursor_position(0, 0).unwrap();
+            for j in 0..SCREEN_HEIGHT {
+                for i in 0..SCREEN_WIDTH {
+                    screen.write_char(output[i][j]).unwrap();
+                }
+
+                screen.write_char('\n').unwrap();
             }
-
-            let _ = screen.write_char('\n');
-        }
-
-        uefi::Status::NOT_READY
-    })
-}
-
-#[uefi::entry]
-fn main() -> uefi::Status {
-    uefi::helpers::init().unwrap();
-
-    let status = uefi::Status::NOT_READY;
-    loop {
-        let status = render_frame(0.0, 0.0);
-        if status == uefi::Status::SUCCESS {
-            break;
-        }
-
-        uefi::boot::stall(core::time::Duration::from_millis(1000 / 60));
+        });
     }
 
-    status
+    uefi::Status::SUCCESS
 }
