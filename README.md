@@ -1,2 +1,8 @@
 # uefi-donut-rs
-Donut implementation written in Rust on UEFI
+Port of donut implementation written in Rust on UEFI
+
+## Run
+
+```sh
+./run.sh
+```
