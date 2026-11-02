@@ -103,8 +103,8 @@ fn main() -> uefi::Status {
             }
         });
 
-        a += 0.04;
-        b += 0.02;
+        a += THETA_SPACING;
+        b += PHI_SPACING;
 
         uefi::boot::stall(core::time::Duration::from_millis(1000 / 60));
     }
