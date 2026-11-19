@@ -2,7 +2,8 @@
 #![no_std]
 
 extern crate alloc;
-use alloc::vec;
+use alloc::{vec, vec::Vec};
+use uefi::system;
 use core::fmt::Write;
 
 const SCREEN_WIDTH: usize = 75;
@@ -16,6 +17,21 @@ const K2: f64 = 5.0;
 const K1: f64 = (SCREEN_WIDTH as f64) * K2 * 3.0 / (8.0 * (R1 + R2));
 
 const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
+
+fn render(output: &mut Vec<Vec<char>>) {
+    let screen = system::with_stdout(|screen| {
+            screen.clear().unwrap();
+            for j in 0..SCREEN_HEIGHT {
+                for i in 0..SCREEN_WIDTH {
+                    screen.write_char(output[i][j]).unwrap();
+                }
+
+                screen.write_char('\n').unwrap();
+            }
+    });
+
+    screen
+}
 
 #[uefi::entry]
 fn main() -> uefi::Status {
@@ -92,16 +108,7 @@ fn main() -> uefi::Status {
             }
         }
 
-        let _ = uefi::system::with_stdout(|screen| {
-            screen.clear().unwrap();
-            for j in 0..SCREEN_HEIGHT {
-                for i in 0..SCREEN_WIDTH {
-                    screen.write_char(output[i][j]).unwrap();
-                }
-
-                screen.write_char('\n').unwrap();
-            }
-        });
+        render(&mut output);
 
         a += THETA_SPACING;
         b += PHI_SPACING;
