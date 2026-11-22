@@ -1,6 +1,8 @@
 #![no_main]
 #![no_std]
 
+use core::fmt::Write;
+
 const SCREEN_WIDTH: usize = 75;
 const SCREEN_HEIGHT: usize = 75;
 
@@ -15,14 +17,14 @@ const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
 
 fn render(output: &mut [[char; SCREEN_HEIGHT]; SCREEN_WIDTH]) {
     uefi::system::with_stdout(|screen| {
-            screen.clear().unwrap();
-            for j in 0..SCREEN_HEIGHT - 1 {
-                for i in 0..SCREEN_WIDTH - 1 {
-                    uefi::print!("{}", output[i][j]);
-                }
-
-                uefi::println!("");
+        screen.clear().unwrap();
+        for j in 0..SCREEN_HEIGHT {
+            for i in 0..SCREEN_WIDTH {
+                screen.write_char(output[i][j]);
             }
+
+            screen.write_char('\n');
+        }
     });
 }
 
