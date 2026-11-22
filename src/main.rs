@@ -3,8 +3,8 @@
 
 use core::fmt::Write;
 
-const SCREEN_WIDTH: usize = 75;
-const SCREEN_HEIGHT: usize = 75;
+const SCREEN_WIDTH: usize = 80;
+const SCREEN_HEIGHT: usize = 25;
 
 const THETA_SPACING: f64 = 0.07;
 const PHI_SPACING: f64 = 0.02;
@@ -17,14 +17,15 @@ const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
 
 fn render(output: &mut [[char; SCREEN_HEIGHT]; SCREEN_WIDTH]) {
     uefi::system::with_stdout(|screen| {
-        screen.clear().unwrap();
-        for j in 0..SCREEN_HEIGHT {
-            for i in 0..SCREEN_WIDTH {
-                screen.write_char(output[i][j]);
-            }
+        let mode = screen.current_mode().unwrap().unwrap();
 
-            screen.write_char('\n');
+        for j in 0..mode.rows().min(SCREEN_HEIGHT - 1) {
+            for i in 0..mode.columns().min(SCREEN_WIDTH - 1) {
+                screen.write_char(output[i][j]).unwrap();
+            }
+            screen.write_char('\n').unwrap();
         }
+        screen.set_cursor_position(0, 0).unwrap();
     });
 }
 
@@ -37,6 +38,12 @@ fn main() -> uefi::Status {
 
     let mut output: [[char; SCREEN_HEIGHT]; SCREEN_WIDTH] = [[' '; SCREEN_HEIGHT]; SCREEN_WIDTH];
     let mut zbuffer: [[f64; SCREEN_HEIGHT]; SCREEN_WIDTH] = [[0.0; SCREEN_HEIGHT]; SCREEN_WIDTH];
+
+    // use best supported text mode
+    uefi::system::with_stdout(|screen| {
+        let best_mode = screen.modes().last().unwrap();
+        screen.set_mode(best_mode).unwrap();
+    });
 
     loop {
         output.iter_mut().for_each(|row| row.fill(' '));
@@ -108,7 +115,7 @@ fn main() -> uefi::Status {
         a += THETA_SPACING;
         b += PHI_SPACING;
 
-        uefi::boot::stall(core::time::Duration::from_millis(1000 / 60));
+        uefi::boot::stall(core::time::Duration::from_millis(16));
     }
 
     uefi::Status::SUCCESS
