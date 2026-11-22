@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 libm = "0.2.16"
-uefi = { version = "0.41.0", features = ["alloc", "global_allocator", "panic_handler"] }
+uefi = { version = "0.41.0", features = ["panic_handler"] }

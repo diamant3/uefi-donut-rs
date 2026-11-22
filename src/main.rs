@@ -1,11 +1,6 @@
 #![no_main]
 #![no_std]
 
-extern crate alloc;
-use alloc::{vec, vec::Vec};
-use uefi::system;
-use core::fmt::Write;
-
 const SCREEN_WIDTH: usize = 75;
 const SCREEN_HEIGHT: usize = 75;
 
@@ -18,19 +13,17 @@ const K1: f64 = (SCREEN_WIDTH as f64) * K2 * 3.0 / (8.0 * (R1 + R2));
 
 const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
 
-fn render(output: &mut Vec<Vec<char>>) {
-    let screen = system::with_stdout(|screen| {
+fn render(output: &mut [[char; SCREEN_HEIGHT]; SCREEN_WIDTH]) {
+    uefi::system::with_stdout(|screen| {
             screen.clear().unwrap();
-            for j in 0..SCREEN_HEIGHT {
-                for i in 0..SCREEN_WIDTH {
-                    screen.write_char(output[i][j]).unwrap();
+            for j in 0..SCREEN_HEIGHT - 1 {
+                for i in 0..SCREEN_WIDTH - 1 {
+                    uefi::print!("{}", output[i][j]);
                 }
 
-                screen.write_char('\n').unwrap();
+                uefi::println!("");
             }
     });
-
-    screen
 }
 
 #[uefi::entry]
@@ -40,8 +33,8 @@ fn main() -> uefi::Status {
     let mut a = 0.0;
     let mut b = 0.0;
 
-    let mut output = vec![vec![' '; SCREEN_HEIGHT]; SCREEN_WIDTH];
-    let mut zbuffer = vec![vec![0.0; SCREEN_HEIGHT]; SCREEN_WIDTH];
+    let mut output: [[char; SCREEN_HEIGHT]; SCREEN_WIDTH] = [[' '; SCREEN_HEIGHT]; SCREEN_WIDTH];
+    let mut zbuffer: [[f64; SCREEN_HEIGHT]; SCREEN_WIDTH] = [[0.0; SCREEN_HEIGHT]; SCREEN_WIDTH];
 
     loop {
         output.iter_mut().for_each(|row| row.fill(' '));
