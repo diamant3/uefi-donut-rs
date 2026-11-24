@@ -18,6 +18,7 @@ const LOOP_END: f64 = 2.0 * core::f64::consts::PI;
 fn render(output: &mut [[char; SCREEN_HEIGHT]; SCREEN_WIDTH]) {
     uefi::system::with_stdout(|screen| {
         let mode = screen.current_mode().unwrap().unwrap();
+        screen.set_color(uefi::proto::console::text::Color::White, uefi::proto::console::text::Color::Black).unwrap();
 
         for j in 0..mode.rows().min(SCREEN_HEIGHT - 1) {
             for i in 0..mode.columns().min(SCREEN_WIDTH - 1) {
@@ -114,8 +115,6 @@ fn main() -> uefi::Status {
 
         a += THETA_SPACING;
         b += PHI_SPACING;
-
-        uefi::boot::stall(core::time::Duration::from_millis(16));
     }
 
     uefi::Status::SUCCESS
